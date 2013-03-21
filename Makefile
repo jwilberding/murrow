@@ -1,4 +1,4 @@
-# Copyright 2012 Erlware, LLC. All Rights Reserved.
+# Copyright 2013 Erlware, LLC. All Rights Reserved.
 #
 # This file is provided to you under the Apache License,
 # Version 2.0 (the "License"); you may not use this file
@@ -39,15 +39,6 @@ endif
 	get-deps escript clean-common-test-data
 
 all: compile escript dialyzer test
-
-# =============================================================================
-# Include relevant sub-makefiles.
-# =============================================================================
-# These are not subdirs, they are just additional makefile information
-# that happens to live subdirectories
-
-include $(CURDIR)/docs/docs.mkf
-
 
 # =============================================================================
 # Rules to build the system
