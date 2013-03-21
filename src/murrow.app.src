@@ -1,0 +1,11 @@
+%% -*- erlang -*-
+{application, murrow,
+ [{description, "An Erlang implementation of the newscast protocol"},
+  {vsn, "0.0.1"},
+  {registered,[murrow_sup]},
+  {applications, [kernel,
+                  stdlib,
+                  lager,
+                  jsx]},
+  {mod, {murrow_app,[]}},
+  {start_phases, []}]}.
