@@ -22,3 +22,11 @@ Timestamp - binary()
 News Item
  - AgentID - binary() -- persistnent
  - Data - binary() (serialized term?)
+
+
+$ ./bin/murrow_demo
+{P1,P2,P3,P4,P5} = murrow_demo:start().
+murrow:news_updatec(P1, P2, <<"news_1">>).
+murrow:news_updatec(P1, P2, <<"news_2">>).
+murrow:news_updatec(P1, P2, <<"news_3">>).
+murrow:get_newsc(P3,P2).

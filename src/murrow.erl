@@ -66,9 +66,11 @@ get_news(PID) ->
     gen_server:call(PID, get_news).
 
 %% make cast?
+%% only used internally
 news_update(PID, News) ->
     gen_server:call(PID, {news_update, News}).
 
+%% only used internally
 get_newsc(FromPID, ToPID) ->
     gen_server:call(FromPID, {get_newsc, ToPID}).
 
@@ -89,20 +91,18 @@ init([Name]) ->
 
 %% @private
 handle_call(get_news, _From, #state{name=Name, cache=Cache}=State) ->
-    lager:info("get_news: Name: ~p Cache: ~p", [Name, Cache]),
+    lager:info("get_news: Name: ~p~nCache: ~p", [Name, Cache]),
     {reply, <<"news">>, State};
 handle_call({news_update, News}, From, #state{name=Name, cache=Cache}=State) ->
-    CacheItem = #cache_item{address=From, timestamp=datetime:now(), news_item=News},
+    CacheItem = #cache_item{address=From, timestamp=os:timestamp(), news_item=News},
     UpdatedCache = lists:sublist([CacheItem | Cache], ?CACHE_SIZE),
-    lager:info("update_news: Name: ~p Cache: ~p News: ~p", [Name, UpdatedCache, News]),
+    lager:info("update_news: Name: ~p~nCache: ~p", [Name, UpdatedCache]),
     {reply, <<"ok">>, State#state{cache=UpdatedCache}};
 handle_call({get_newsc, ToPID}, _From, State) ->
     News = murrow:get_news(ToPID),
-    %lager:info("get_newsc: Name: ~p Cache: ~p", [Name, Cache]),
     {reply, News, State};
 handle_call({news_updatec, ToPID, News}, _From, State) ->
     Reply = murrow:news_update(ToPID, News),
-    %lager:info("update_newsc: Name: ~p Cache: ~p News: ~p", [Name, UpdatedCache, News]),
     {reply, Reply, State}.
 
 %% @private
