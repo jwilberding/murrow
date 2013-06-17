@@ -73,7 +73,7 @@ $(DEPS_PLT):
 
 dialyzer: $(DEPS_PLT)
 	dialyzer --plt $(DEPS_PLT) --fullpath -Wrace_conditions \
-	-I include -pa $(CURDIR)/ebin --src src
+	-pa $(CURDIR)/ebin --src src
 
 typer:
 	typer --plt $(DEPS_PLT) -r ./src

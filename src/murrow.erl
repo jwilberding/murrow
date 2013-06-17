@@ -21,6 +21,7 @@
          news_update/2,
          get_newsc/2,
          news_updatec/3,
+         interval/1,
          terminate/1]).
 
 %% gen_server callbacks
@@ -60,7 +61,9 @@ start_deps(App, Type) ->
 %%%===================================================================
 
 start_link(Name) ->
-    gen_server:start_link(?MODULE, [Name], []).
+    {ok, PID} = gen_server:start_link(?MODULE, [Name], []),
+    timer:apply_interval(40000, murrow, interval, [PID]),
+    {ok, PID}.
 
 get_news(PID) ->
     gen_server:call(PID, get_news).
@@ -78,6 +81,10 @@ get_newsc(FromPID, ToPID) ->
 news_updatec(FromPID, ToPID, News) ->
     gen_server:call(FromPID, {news_updatec, ToPID, News}).
 
+%% used to make periodic updates
+interval(PID) ->
+    gen_server:cast(PID, interval).
+
 terminate(PID) ->
     gen_server:call(PID, terminate, 10000).
 
@@ -90,11 +97,13 @@ init([Name]) ->
     {ok, #state{name=Name, cache=[]}}.
 
 %% @private
-handle_call(get_news, _From, #state{name=Name, cache=Cache}=State) ->
-    lager:info("get_news: Name: ~p~nCache: ~p", [Name, Cache]),
-    {reply, <<"news">>, State};
+handle_call(get_news, _From, State) ->
+    %%lager:info("get_news: Name: ~p~nCache: ~p", [Name, Cache]),
+    News = get_news_i(State),
+    {reply, News, State};
 handle_call({news_update, News}, From, #state{name=Name, cache=Cache}=State) ->
-    CacheItem = #cache_item{address=From, timestamp=os:timestamp(), news_item=News},
+    {PID, _Ref} = From,
+    CacheItem = #cache_item{address=PID, timestamp=os:timestamp(), news_item=News},
     UpdatedCache = lists:sublist([CacheItem | Cache], ?CACHE_SIZE),
     lager:info("update_news: Name: ~p~nCache: ~p", [Name, UpdatedCache]),
     {reply, <<"ok">>, State#state{cache=UpdatedCache}};
@@ -106,8 +115,32 @@ handle_call({news_updatec, ToPID, News}, _From, State) ->
     {reply, Reply, State}.
 
 %% @private
-handle_cast(_Msg, State) ->
-    {noreply, State}.
+handle_cast(interval, State) ->
+    lager:info("interval"),
+    %% get current local news list
+    News = get_news_i(State),
+    lager:info("News: ~p", [News]),
+    %% pick random item, get from, use it query news from that server,
+    Count = length(News),
+    State2 = update_with_random(Count, News, State),
+    {noreply, State2}.
+
+update_with_random(0, _News, State) ->
+    State;
+update_with_random(N, News, State) ->
+    Random = random:uniform(N),
+    lager:info("Random: ~p", [Random]),
+    NewsItem = lists:nth(Random, News),
+    From = NewsItem#cache_item.address,
+    lager:info("From: ~p", [From]),
+    RemoteNews = get_news(From),
+    lager:info("RemoteNews: ~p", [RemoteNews]),
+    %% merge news and keep latest 5
+    %% todo: sort with record syntax, not assumed list of tuples
+    NewNews = lists:sublist(lists:reverse(lists:keysort(3,lists:flatten([News | RemoteNews]))), ?CACHE_SIZE),
+    lager:info("NewNews: ~p", [NewNews]),
+    State#state{cache=NewNews}.
+    %%State.
 
 %% @private
 handle_info(_Info, State) ->
@@ -124,3 +157,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+get_news_i(#state{cache=Cache}=_State) ->
+    Cache.
