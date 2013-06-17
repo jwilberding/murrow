@@ -116,13 +116,15 @@ handle_call({news_updatec, ToPID, News}, _From, State) ->
 
 %% @private
 handle_cast(interval, State) ->
-    lager:info("interval"),
+    lager:info("interval: ~p", [self()]),
     %% get current local news list
     News = get_news_i(State),
     lager:info("News: ~p", [News]),
+    News2 = lists:takewhile(fun(X) -> X#cache_item.address =/= self() end, News),
+    lager:info("News2: ~p", [News2]),
     %% pick random item, get from, use it query news from that server,
-    Count = length(News),
-    State2 = update_with_random(Count, News, State),
+    Count = length(News2),
+    State2 = update_with_random(Count, News2, State),
     {noreply, State2}.
 
 update_with_random(0, _News, State) ->
