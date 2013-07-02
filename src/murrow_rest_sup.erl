@@ -5,13 +5,12 @@
 %%% @end
 %%% @copyright 2013 Erlware, LLC
 %%%----------------------------------------------------------------
--module(murrow_sup).
+-module(murrow_rest_sup).
 
 -behaviour(supervisor).
 
 %% API
--export([start_link/0,
-         start_child/1]).
+-export([start_link/0]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -26,12 +25,6 @@
 start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
-start_child(Name) ->
-    supervisor:start_child(?SERVER, [Name]).
-
-%%terminate_child(PID) ->
-%%    wingman_db:terminate(PID).
-
 %%%===================================================================
 %%% Supervisor callbacks
 %%%===================================================================
@@ -40,21 +33,19 @@ start_child(Name) ->
 %% @private
 -spec init(list()) -> {ok, {SupFlags::any(), [ChildSpec::any()]}} |
                        ignore | {error, Reason::any()}.
-init(_) ->
-    RestartStrategy = simple_one_for_one,
-    MaxRestarts = 1000,
-    MaxSecondsBetweenRestarts = 3600,
+init([]) ->
+    Dispatch = cowboy_router:compile([
+                                     %% {HostMatch, list({PathMatch, Handler, Opts})}
+                                     {'_', [{"/user", murrow_rest_handler, []}]}
+                                     ]),
 
-    SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
+    ListenPort = list_to_integer(os:getenv("PORT")),
 
-    Restart = temporary,
-    Shutdown = 2000,
-    Type = worker,
+    ChildSpec = ranch:child_spec(erlangdc_cowboy, 100,
+                                    ranch_tcp, [{port, ListenPort}],
+                                    cowboy_protocol, [{env, [{dispatch, Dispatch}]}]),
 
-    AChild = {murrow, {murrow, start_link, []},
-              Restart, Shutdown, Type, [murrow]},
-
-    {ok, {SupFlags, [AChild]}}.
+    {ok, {{one_for_one, 10, 10}, [ChildSpec]}}.
 
 %%%===================================================================
 %%% Internal functions

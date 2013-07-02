@@ -10,7 +10,8 @@
 
 -module(murrow_demo).
 -export([start/0,
-         start2/0]).
+         start2/0,
+         start3/0]).
 
 start() ->
     murrow:start(),
@@ -42,3 +43,8 @@ start2() ->
     %%{ok, PID4} = murrow_sup:start_child(<<"node4">>),
     %%{ok, PID5} = murrow_sup:start_child(<<"node5">>),
     {P1, P2, P3}.
+
+start3() ->
+    %murrow:start(),
+    lager:info("starting node1 rest"),
+    murrow_rest_sup:start_link().
