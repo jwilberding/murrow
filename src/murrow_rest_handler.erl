@@ -33,10 +33,12 @@ get_json(Req, State) ->
     lager:info("wooo"),
     try
         %estatsd:increment("erlangdc_handler.requests"),
-        {ok, {<<"basic">>, {Key, Value}}, Req2} = cowboy_req:parse_header(<<"authorization">>, Req),
+        %{ok, {<<"basic">>, {Key, Value}}, Req2} = cowboy_req:parse_header(<<"authorization">>, Req),
         %User = erlangdc_user:get_user(Key, Value),
-        lager:info("Key=~p, Value=~p", [Key, Value]),
-        {{Key, Value}, Req2, State}
+        %lager:info("Key=~p, Value=~p", [Key, Value]),
+        {Id, Req2} = cowboy_http_req:binding(id, Req1),
+        lager:info("id=~p", [Id]),
+        {<<"boo">>, Req2, State}
     catch
         T:E ->
             lager:info("at=handle type=~p exception=~p ~p", [T, E, erlang:get_stacktrace()]),

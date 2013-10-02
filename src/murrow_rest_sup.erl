@@ -34,10 +34,15 @@ start_link() ->
 -spec init(list()) -> {ok, {SupFlags::any(), [ChildSpec::any()]}} |
                        ignore | {error, Reason::any()}.
 init([]) ->
-    Dispatch = cowboy_router:compile([
-                                     %% {HostMatch, list({PathMatch, Handler, Opts})}
-                                     {'_', [{"/user", murrow_rest_handler, []}]}
-                                     ]),
+    %% Dispatch = cowboy_router:compile([
+    %%                                   {'_',
+    %%                                    [{<<"/1/myrcast">>, murrow_rest_handler, []},
+    %%                                     {[<<"/1/myrcast">>, id], murrow_rest_handler, []}]
+    %%                                   }
+    %%                                  ]),
+
+    Dispatch = [{'_', [{<<"/1/myrcast">>, murrow_rest_handler, []},
+                       {[<<"/1/myrcast">>, id], murrow_rest_handler, []}]}],
 
     ListenPort = list_to_integer(os:getenv("PORT")),
 

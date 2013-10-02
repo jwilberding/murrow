@@ -45,6 +45,6 @@ start2() ->
     {P1, P2, P3}.
 
 start3() ->
-    %murrow:start(),
-    lager:info("starting node1 rest"),
+    murrow:start(),
+    lager:info("starting cowboy, yeehaw motherfuckas!"),
     murrow_rest_sup:start_link().
